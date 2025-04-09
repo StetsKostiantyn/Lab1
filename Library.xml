@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<library>
+    <readerIdCounter>3</readerIdCounter>
+    <books>
+        <author>J.R.R. Tolkien</author>
+        <isAvailable>true</isAvailable>
+        <isbn>1111111111111</isbn>
+        <title>The Hobbit</title>
+        <yearOfPublication>1937</yearOfPublication>
+    </books>
+    <books>
+        <author>George Orvwell</author>
+        <isAvailable>true</isAvailable>
+        <isbn>2222222222222</isbn>
+        <title>1984</title>
+        <yearOfPublication>1949</yearOfPublication>
+    </books>
+    <readers>
+        <firstName>Alice</firstName>
+        <id>1</id>
+        <lastName>Smith</lastName>
+    </readers>
+    <readers>
+        <firstName>Bob</firstName>
+        <id>2</id>
+        <lastName>Johnson</lastName>
+    </readers>
+</library>

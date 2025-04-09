@@ -3,12 +3,264 @@
  */
 package lab1;
 
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
 public class App {
-    public String getGreeting() {
-        return "Hello World!";
-    }
+
+    private static Library library = new Library();
+    private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+        int choice;
+        do {
+            printMenu();
+            choice = readIntInput("Enter your choice: ");
+
+            switch (choice) {
+                case 1:
+                    addBook();
+                    break;
+                case 2:
+                    removeBook();
+                    break;
+                case 3:
+                    addMember();
+                    break;
+                case 4:
+                    removeMember();
+                    break;
+                case 5:
+                    requestBook();
+                    break;
+                case 6:
+                    returnBook();
+                    break;
+                case 7:
+                    showLibraryInfo();
+                    break;
+                case 8:
+                    exportData();
+                    break;
+                case 9:
+                    importData();
+                    break;
+                case 0:
+                    System.out.println("Exiting Library");
+                    break;
+                default:
+                    System.err.println("Invalid choice. Please try again.");
+            }
+            System.out.println("------------------------------------"); // Separator
+
+        } while (choice != 0);
+
+        scanner.close();
+    }
+
+    private static void printMenu() {
+        System.out.println("\n===== Library Management System =====");
+        System.out.println("1. Add Book");
+        System.out.println("2. Remove Book");
+        System.out.println("3. Add Member");
+        System.out.println("4. Remove Member");
+        System.out.println("5. Request Book (Borrow)");
+        System.out.println("6. Return Book");
+        System.out.println("7. Show Library Info");
+        System.out.println("8. Export Data to XML");
+        System.out.println("9. Import Data from XML");
+        System.out.println("0. Exit");
+        System.out.println("=====================================");
+    }
+
+    private static void addBook() {
+        System.out.println("\n--- Add New Book ---");
+        String title = readStringInput("Enter book title: ");
+        String author = readStringInput("Enter book author: ");
+        int year = readIntInput("Enter year of publication: ");
+        String isbn = readStringInput("Enter 13-digit ISBN: ");
+
+        Book newBook = library.addBook(title, author, year, isbn);
+        if (newBook != null) {
+            System.out.println("Book added successfully:");
+            System.out.println(newBook);
+        } else {
+            System.err.println("Failed to add book. Check input or logs.");
+        }
+        readStringInput("Press ENTER to continue");
+    }
+
+    private static void removeBook() {
+        System.out.println("\n--- Remove Book ---");
+        String isbn = readStringInput("Enter ISBN of the book to remove: ");
+        Book bookToRemove = library.getBookByIsbn(isbn);
+
+        if (bookToRemove != null) {
+            boolean isBorrowed = false;
+            for (Reader reader : library.getReaders()) {
+                if (reader.getBorrowedBooks().contains(bookToRemove)) {
+                    System.err.println("Cannot remove book: It is currently borrowed by Reader ID " + reader.getId() + " (" + reader.getFirstName() + " " + reader.getLastName() + ").");
+                    isBorrowed = true;
+                    break;
+                }
+            }
+            if (!isBorrowed) {
+                 library.removeBook(bookToRemove);
+                 System.out.println("Book with ISBN " + isbn + " removed successfully.");
+            }
+        } else {
+            System.err.println("Book with ISBN " + isbn + " not found in the library.");
+        }
+        readStringInput("Press ENTER to continue");
+    }
+
+    private static void addMember() {
+        System.out.println("\n--- Add New Member ---");
+        String firstName = readStringInput("Enter member's first name: ");
+        String lastName = readStringInput("Enter member's last name: ");
+
+        Reader newReader = library.addReader(firstName, lastName);
+        if (newReader != null) {
+            System.out.println("Member added successfully:");
+            System.out.println(newReader);
+        } else {
+            System.err.println("Failed to add member. Check input or logs.");
+        }
+        readStringInput("Press ENTER to continue");
+    }
+
+    private static void removeMember() {
+        System.out.println("\n--- Remove Member ---");
+        int readerId = readIntInput("Enter ID of the member to remove: ");
+        Reader readerToRemove = library.getReaderById(readerId);
+
+        if (readerToRemove != null) {
+            if (!readerToRemove.getBorrowedBooks().isEmpty()) {
+                System.err.println("Warning: This reader still has borrowed books. They will be marked as available upon removal.");
+            }
+            library.removeReader(readerToRemove);
+            System.out.println("Reader with ID " + readerId + " removed successfully.");
+        } else {
+            System.err.println("Reader with ID " + readerId + " not found.");
+        }
+        readStringInput("Press ENTER to continue");
+    }
+
+    private static void requestBook() {
+        System.out.println("\n--- Request (Borrow) Book ---");
+        int readerId = readIntInput("Enter your Reader ID: ");
+        Reader reader = library.getReaderById(readerId);
+
+        if (reader == null) {
+            System.err.println("Reader with ID " + readerId + " not found.");
+            return;
+        }
+
+        String isbn = readStringInput("Enter ISBN of the book to borrow: ");
+        Book book = library.getBookByIsbn(isbn);
+
+        if (book == null) {
+            System.err.println("Book with ISBN " + isbn + " not found in the library.");
+            return;
+        }
+
+        reader.requestBook(book, library);
+        readStringInput("Press ENTER to continue");
+    }
+
+    private static void returnBook() {
+        System.out.println("\n--- Return Book ---");
+        int readerId = readIntInput("Enter your Reader ID: ");
+        Reader reader = library.getReaderById(readerId);
+
+        if (reader == null) {
+            System.err.println("Reader with ID " + readerId + " not found.");
+            return;
+        }
+
+        String isbn = readStringInput("Enter ISBN of the book to return: ");
+        Book bookInLibrary = library.getBookByIsbn(isbn);
+
+        if (bookInLibrary == null) {
+             System.err.println("Book with ISBN " + isbn + " doesn't belong to this library's catalog.");
+             return;
+        }
+
+        reader.returnBook(bookInLibrary, library);
+        readStringInput("Press ENTER to continue");
+    }
+
+    private static void showLibraryInfo() {
+        System.out.println("\n--- Current Library Status ---");
+        System.out.println(library); 
+        readStringInput("Press enter to continue");
+    }
+
+    private static void exportData() {
+        System.out.println("\n--- Export Library Data to XML ---");
+        String filePath = readStringInput("Enter the file path for export (e.g., library_export.xml): ");
+
+        Library.SortOption sortOption = null;
+        System.out.println("Select sorting option for export (optional):");
+        System.out.println("1. Sort Readers by ID");
+        System.out.println("2. Sort Readers by Last Name");
+        System.out.println("3. Sort Readers by Borrowed Books Count");
+        System.out.println("4. Sort Books by Title");
+        System.out.println("5. Sort Books by Year of Publication");
+        System.out.println("6. Sort Books by Availability");
+        System.out.println("0. No Sorting (Default)");
+        int sortChoice = readIntInput("Enter sort choice (0-6): ");
+
+        switch (sortChoice) {
+            case 1: sortOption = Library.SortOption.READER_ID; break;
+            case 2: sortOption = Library.SortOption.READER_LAST_NAME; break;
+            case 3: sortOption = Library.SortOption.READER_BORROWED_BOOKS_COUNT; break;
+            case 4: sortOption = Library.SortOption.BOOK_TITLE; break;
+            case 5: sortOption = Library.SortOption.BOOK_YEAR_OF_PUBLICATION; break;
+            case 6: sortOption = Library.SortOption.BOOK_AVAILABILITY; break;
+            case 0:
+                System.out.println("Exporting without specific sorting."); break;
+            default:
+                System.err.println("Invalid sort choice. Exporting without specific sorting."); break;
+        }
+
+        XMLManager.ExportToXml(library, filePath, sortOption);
+        readStringInput("Press ENTER to continue");
+    }
+
+    private static void importData() {
+        System.out.println("\n--- Import Library Data from XML ---");
+        String filePath = readStringInput("Enter the file path to import from (e.g., library_export.xml): ");
+        Library importedLibrary = XMLManager.ImportFromXml(filePath);
+
+        if (importedLibrary != null) {
+            library = importedLibrary;
+            System.out.println("Data successfully imported from: " + filePath);
+            System.out.println("Current library data has been replaced.");
+        } else {
+            System.err.println("Failed to import data from: " + filePath + ". Check the file format and path.");
+        }
+
+        readStringInput("Press ENTER to continue");
+    }
+
+    private static String readStringInput(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine();
+    }
+
+    private static int readIntInput(String prompt) {
+        int input = -1;
+        while (true) {
+            System.out.print(prompt);
+            try {
+                input = scanner.nextInt();
+                scanner.nextLine();
+                return input;
+            } catch (InputMismatchException e) {
+                System.err.println("Invalid input. Please enter an integer.");
+                scanner.nextLine();
+            }
+        }
     }
 }
